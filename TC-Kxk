@@ -1,7 +1,3 @@
---Made By ME!! KXK
--- Modified: removed status label, show popup on Update, removed Teleport Back button, added player dropdown, added anti-cheat detection and warning
--- Further Modified: Added initial top popup "Simple Teleport Coordination By Kxk", modified forceful teleport to attempt multiple times until successful
-
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
