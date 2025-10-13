@@ -1,0 +1,517 @@
+--Made By ME!! KXK
+-- Modified: removed status label, show popup on Update, removed Teleport Back button, added player dropdown, added anti-cheat detection and warning
+-- Further Modified: Added initial top popup "Simple Teleport Coordination By Kxk", modified forceful teleport to attempt multiple times until successful
+
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+
+local hasAntiCheat = false
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "TeleportPlusGui"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = PlayerGui
+
+local container = Instance.new("Frame")
+container.Name = "Container"
+container.Size = UDim2.fromOffset(420, 160)
+container.Position = UDim2.new(0.5, -210, 0.12, 0)
+container.AnchorPoint = Vector2.new(0.5, 0)
+container.BackgroundTransparency = 0
+container.BackgroundColor3 = Color3.fromRGB(24, 26, 35)
+container.BorderSizePixel = 0
+container.Parent = screenGui
+
+local containerCorner = Instance.new("UICorner", container)
+containerCorner.CornerRadius = UDim.new(0, 10)
+
+local header = Instance.new("Frame")
+header.Name = "Header"
+header.Size = UDim2.new(1, 0, 0, 34)
+header.Position = UDim2.new(0, 0, 0, 0)
+header.BackgroundTransparency = 1
+header.Parent = container
+
+local title = Instance.new("TextLabel")
+title.Name = "Title"
+title.Size = UDim2.new(1, -140, 1, 0) -- adjusted to make room for extra button
+title.Position = UDim2.new(0, 12, 0, 0)
+title.BackgroundTransparency = 1
+title.Font = Enum.Font.GothamBold
+title.TextSize = 15
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.Text = "Teleport — paste coords and press Run"
+title.TextColor3 = Color3.fromRGB(230, 230, 230)
+title.Parent = header
+
+local btnTemplateProps = {
+	ClassName = "TextButton",
+	Size = UDim2.fromOffset(28, 22),
+	BackgroundTransparency = 1,
+	Font = Enum.Font.GothamBold,
+	TextSize = 16,
+	TextColor3 = Color3.fromRGB(235,235,235),
+	Parent = header
+}
+
+local closeBtn = Instance.new(btnTemplateProps.ClassName)
+closeBtn:ClearAllChildren()
+closeBtn.Size = btnTemplateProps.Size
+closeBtn.BackgroundTransparency = btnTemplateProps.BackgroundTransparency
+closeBtn.Font = btnTemplateProps.Font
+closeBtn.TextSize = btnTemplateProps.TextSize
+closeBtn.TextColor3 = btnTemplateProps.TextColor3
+closeBtn.Text = "✕"
+closeBtn.Position = UDim2.new(1, -34, 0, 6)
+closeBtn.Parent = header
+
+local miniBtn = Instance.new(btnTemplateProps.ClassName)
+miniBtn:ClearAllChildren()
+miniBtn.Size = btnTemplateProps.Size
+miniBtn.BackgroundTransparency = btnTemplateProps.BackgroundTransparency
+miniBtn.Font = btnTemplateProps.Font
+miniBtn.TextSize = btnTemplateProps.TextSize
+miniBtn.TextColor3 = btnTemplateProps.TextColor3
+miniBtn.Text = "—"
+miniBtn.Position = UDim2.new(1, -68, 0, 6)
+miniBtn.Parent = header
+
+local inputBox = Instance.new("TextBox")
+inputBox.Name = "Input"
+inputBox.PlaceholderText = "Paste coords here — examples: 'x,y,z' or 'x y z' or '(x, y, z)'"
+inputBox.Text = ""
+inputBox.ClearTextOnFocus = false
+inputBox.Font = Enum.Font.Gotham
+inputBox.TextSize = 14
+inputBox.TextColor3 = Color3.fromRGB(235,235,235)
+inputBox.TextWrapped = true
+inputBox.BackgroundColor3 = Color3.fromRGB(16, 18, 25)
+inputBox.BackgroundTransparency = 0
+inputBox.Size = UDim2.new(1, -16, 0, 56)
+inputBox.Position = UDim2.new(0, 8, 0, 38)
+inputBox.Parent = container
+
+local inputCorner = Instance.new("UICorner", inputBox)
+inputCorner.CornerRadius = UDim.new(0, 8)
+
+local runBtn = Instance.new("TextButton")
+runBtn.Name = "Run"
+runBtn.Size = UDim2.fromOffset(86, 36)
+runBtn.Position = UDim2.new(1, -98, 1, -52)
+runBtn.AnchorPoint = Vector2.new(0, 0)
+runBtn.Font = Enum.Font.GothamBold
+runBtn.TextSize = 16
+runBtn.Text = "Run"
+runBtn.TextColor3 = Color3.fromRGB(235,235,235)
+runBtn.BackgroundColor3 = Color3.fromRGB(55, 120, 255)
+runBtn.Parent = container
+
+local runCorner = Instance.new("UICorner", runBtn)
+runCorner.CornerRadius = UDim.new(0, 8)
+
+local updBtn = Instance.new("TextButton")
+updBtn.Name = "Upd"
+updBtn.Size = UDim2.fromOffset(120, 32)
+updBtn.Position = UDim2.new(0, 8, 1, -44)
+updBtn.Font = Enum.Font.GothamBold
+updBtn.TextSize = 14
+updBtn.Text = "Update position"
+updBtn.TextColor3 = Color3.fromRGB(235,235,235)
+updBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 75)
+updBtn.Parent = container
+
+local updCorner = Instance.new("UICorner", updBtn)
+updCorner.CornerRadius = UDim.new(0, 8)
+
+local playersBtn = Instance.new("TextButton")
+playersBtn.Name = "Players"
+playersBtn.Size = UDim2.fromOffset(120, 32)
+playersBtn.Position = UDim2.new(0, 136, 1, -44)
+playersBtn.Font = Enum.Font.GothamBold
+playersBtn.TextSize = 14
+playersBtn.Text = "Select Player"
+playersBtn.TextColor3 = Color3.fromRGB(235,235,235)
+playersBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 75)
+playersBtn.Parent = container
+
+local playersCorner = Instance.new("UICorner", playersBtn)
+playersCorner.CornerRadius = UDim.new(0, 8)
+
+local dropdownFrame = Instance.new("ScrollingFrame")
+dropdownFrame.Name = "PlayerDropdown"
+dropdownFrame.Size = UDim2.new(1, -16, 0, 100)
+dropdownFrame.Position = UDim2.new(0, 8, 0, 98)
+dropdownFrame.BackgroundColor3 = Color3.fromRGB(16, 18, 25)
+dropdownFrame.BorderSizePixel = 0
+dropdownFrame.ScrollBarThickness = 6
+dropdownFrame.Visible = false
+dropdownFrame.Parent = container
+
+local ddCorner = Instance.new("UICorner", dropdownFrame)
+ddCorner.CornerRadius = UDim.new(0, 8)
+
+local uiListLayout = Instance.new("UIListLayout", dropdownFrame)
+uiListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+uiListLayout.Padding = UDim.new(0, 2)
+
+local function parseCoords(s)
+	if not s then
+		return nil, "no input"
+	end
+	local cleaned = s:gsub("[%(%)]",""):gsub(",", " "):gsub(";", " ")
+	cleaned = cleaned:gsub("%s+", " "):gsub("^%s+", ""):gsub("%s+$", "")
+	local parts = {}
+	for token in string.gmatch(cleaned, "[^%s]+") do
+		table.insert(parts, token)
+	end
+	if #parts < 3 then
+		return nil, "need 3 numbers (x y z)"
+	end
+	local x = tonumber(parts[1])
+	local y = tonumber(parts[2])
+	local z = tonumber(parts[3])
+	if not (x and y and z) then
+		return nil, "invalid numbers"
+	end
+	return Vector3.new(x, y, z)
+end
+
+local function teleportTo(v3, force)
+	force = force or false
+	local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+	if not char then return false, "no character" end
+	local hrp = char:FindFirstChild("HumanoidRootPart") or char:FindFirstChildWhichIsA("BasePart")
+	if not hrp then return false, "no root part" end
+	local oldPos = hrp.Position
+	local ok, err = pcall(function()
+		hrp.CFrame = CFrame.new(v3)
+	end)
+	if not ok then
+		return false, tostring(err or "unknown error")
+	end
+	if force then
+		local attempts = 0
+		local maxAttempts = 20  -- Adjust as needed to prevent infinite loops
+		while attempts < maxAttempts do
+			hrp.CFrame = CFrame.new(v3)
+			task.wait(0.05)  -- Small delay between attempts
+			local currentPos = hrp.Position
+			if (currentPos - v3).Magnitude < 5 then
+				return true
+			end
+			attempts = attempts + 1
+		end
+		return false, "failed after multiple attempts"
+	else
+		task.wait(0.5)
+		local currentPos = hrp.Position
+		local distToTarget = (currentPos - v3).Magnitude
+		local distToOld = (currentPos - oldPos).Magnitude
+		if distToTarget > 5 and distToOld < 5 then
+			return false, "reverted"
+		end
+		return true
+	end
+end
+
+local function showPopup(text, textColor, fromTop)
+	textColor = textColor or Color3.fromRGB(255, 255, 255)
+	fromTop = fromTop or false
+	local popupFrame = Instance.new("Frame")
+	popupFrame.Name = "Popup"
+	popupFrame.Size = UDim2.fromOffset(300, 40)
+	if fromTop then
+		popupFrame.Position = UDim2.new(0.5, 0, 0, -40)  -- Start above screen
+		popupFrame.AnchorPoint = Vector2.new(0.5, 0)
+	else
+		popupFrame.Position = UDim2.new(0.5, 0, 1, -20)
+		popupFrame.AnchorPoint = Vector2.new(0.5, 1)
+	end
+	popupFrame.BackgroundColor3 = Color3.fromRGB(24, 26, 35)
+	popupFrame.BackgroundTransparency = 1
+	popupFrame.BorderSizePixel = 0
+	popupFrame.Parent = screenGui
+
+	local popupCorner = Instance.new("UICorner", popupFrame)
+	popupCorner.CornerRadius = UDim.new(0, 8)
+
+	local popupLabel = Instance.new("TextLabel")
+	popupLabel.Size = UDim2.new(1, 0, 1, 0)
+	popupLabel.BackgroundTransparency = 1
+	popupLabel.Text = text
+	popupLabel.Font = Enum.Font.Gotham
+	popupLabel.TextSize = 14
+	popupLabel.TextColor3 = textColor
+	popupLabel.TextTransparency = 1
+	popupLabel.Parent = popupFrame
+
+	-- Fade in and slide in if from top
+	local tweenInFrame = TweenService:Create(popupFrame, TweenInfo.new(0.3), {BackgroundTransparency = 0})
+	local tweenInLabel = TweenService:Create(popupLabel, TweenInfo.new(0.3), {TextTransparency = 0})
+	if fromTop then
+		local tweenSlide = TweenService:Create(popupFrame, TweenInfo.new(0.3), {Position = UDim2.new(0.5, 0, 0, 20)})
+		tweenSlide:Play()
+	end
+	tweenInFrame:Play()
+	tweenInLabel:Play()
+
+	-- Fade out after delay
+	task.delay(3, function()
+		local tweenOutFrame = TweenService:Create(popupFrame, TweenInfo.new(0.3), {BackgroundTransparency = 1})
+		local tweenOutLabel = TweenService:Create(popupLabel, TweenInfo.new(0.3), {TextTransparency = 1})
+		tweenOutFrame:Play()
+		tweenOutLabel:Play()
+		tweenOutLabel.Completed:Connect(function()
+			popupFrame:Destroy()
+		end)
+	end)
+end
+
+local function showConfirm(callback)
+	local confirmFrame = Instance.new("Frame")
+	confirmFrame.Name = "ConfirmPopup"
+	confirmFrame.Size = UDim2.fromOffset(300, 120)
+	confirmFrame.Position = UDim2.new(0.5, -150, 0.5, -60)
+	confirmFrame.BackgroundColor3 = Color3.fromRGB(24, 26, 35)
+	confirmFrame.BorderSizePixel = 0
+	confirmFrame.Parent = screenGui
+
+	local cfCorner = Instance.new("UICorner", confirmFrame)
+	cfCorner.CornerRadius = UDim.new(0, 10)
+
+	local msgLabel = Instance.new("TextLabel")
+	msgLabel.Size = UDim2.new(1, -20, 0, 60)
+	msgLabel.Position = UDim2.new(0, 10, 0, 10)
+	msgLabel.BackgroundTransparency = 1
+	msgLabel.Text = "This game has anti cheat teleport i cant teleport you it may cause a ban to you account DO YOU STILL WANNA CONTINUE?"
+	msgLabel.Font = Enum.Font.Gotham
+	msgLabel.TextSize = 14
+	msgLabel.TextColor3 = Color3.fromRGB(235, 235, 235)
+	msgLabel.TextWrapped = true
+	msgLabel.Parent = confirmFrame
+
+	local yesBtn = Instance.new("TextButton")
+	yesBtn.Size = UDim2.fromOffset(100, 30)
+	yesBtn.Position = UDim2.new(0, 40, 1, -40)
+	yesBtn.Text = "Yes"
+	yesBtn.TextColor3 = Color3.fromRGB(255, 0, 0)
+	yesBtn.Font = Enum.Font.GothamBold
+	yesBtn.TextSize = 16
+	yesBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+	yesBtn.Parent = confirmFrame
+
+	local yCorner = Instance.new("UICorner", yesBtn)
+	yCorner.CornerRadius = UDim.new(0, 6)
+
+	local noBtn = Instance.new("TextButton")
+	noBtn.Size = UDim2.fromOffset(100, 30)
+	noBtn.Position = UDim2.new(1, -140, 1, -40)
+	noBtn.Text = "No"
+	noBtn.TextColor3 = Color3.fromRGB(0, 255, 0)
+	noBtn.Font = Enum.Font.GothamBold
+	noBtn.TextSize = 16
+	noBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+	noBtn.Parent = confirmFrame
+
+	local nCorner = Instance.new("UICorner", noBtn)
+	nCorner.CornerRadius = UDim.new(0, 6)
+
+	yesBtn.MouseButton1Click:Connect(function()
+		confirmFrame:Destroy()
+		callback(true)
+	end)
+
+	noBtn.MouseButton1Click:Connect(function()
+		confirmFrame:Destroy()
+		callback(false)
+	end)
+end
+
+local function tryRun()
+	local v3, err = parseCoords(inputBox.Text)
+	if not v3 then
+		showPopup("Error: " .. err, Color3.fromRGB(255, 100, 100))
+		return
+	end
+
+	local function performTeleport(force)
+		return teleportTo(v3, force)
+	end
+
+	local function showSuccess()
+		local coordStr = string.format("%.3f, %.3f, %.3f", v3.X, v3.Y, v3.Z)
+		showPopup("Teleported to (" .. coordStr .. ")", Color3.fromRGB(100, 255, 100))
+	end
+
+	if hasAntiCheat then
+		showConfirm(function(yes)
+			if yes then
+				local ok, terr = performTeleport(true)
+				if ok then
+					showSuccess()
+				else
+					showPopup("Teleport failed: " .. tostring(terr), Color3.fromRGB(255, 100, 100))
+				end
+			end
+		end)
+	else
+		local ok, terr = performTeleport(false)
+		if ok then
+			showSuccess()
+		elseif terr == "reverted" then
+			hasAntiCheat = true
+			showConfirm(function(yes)
+				if yes then
+					local ok, terr = performTeleport(true)
+					if ok then
+						showSuccess()
+					else
+						showPopup("Teleport failed: " .. tostring(terr), Color3.fromRGB(255, 100, 100))
+					end
+				end
+			end)
+		else
+			showPopup("Teleport failed: " .. tostring(terr), Color3.fromRGB(255, 100, 100))
+		end
+	end
+end
+
+updBtn.MouseButton1Click:Connect(function()
+	local char = LocalPlayer.Character
+	local hrp = char and char:FindFirstChild("HumanoidRootPart")
+	if not hrp then
+		showPopup("Error: no HumanoidRootPart", Color3.fromRGB(255, 100, 100))
+		return
+	end
+	local p = hrp.Position
+	inputBox.Text = string.format("%.6f, %.6f, %.6f", p.X, p.Y, p.Z)
+	showPopup("Position Updated", Color3.fromRGB(100, 255, 100))
+end)
+
+playersBtn.MouseButton1Click:Connect(function()
+	dropdownFrame.Visible = not dropdownFrame.Visible
+	local targetHeight = dropdownFrame.Visible and 260 or 160
+	TweenService:Create(container, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {Size = UDim2.fromOffset(420, targetHeight)}):Play()
+	if not dropdownFrame.Visible then return end
+	for _, child in ipairs(dropdownFrame:GetChildren()) do
+		if child:IsA("TextButton") then child:Destroy() end
+	end
+	local players = Players:GetPlayers()
+	for _, player in ipairs(players) do
+		local btn = Instance.new("TextButton")
+		btn.Size = UDim2.new(1, 0, 0, 30)
+		btn.BackgroundColor3 = Color3.fromRGB(24, 26, 35)
+		btn.Text = player.Name
+		btn.Font = Enum.Font.Gotham
+		btn.TextSize = 14
+		btn.TextColor3 = Color3.fromRGB(235, 235, 235)
+		local btnCorner = Instance.new("UICorner", btn)
+		btnCorner.CornerRadius = UDim.new(0, 6)
+		btn.Parent = dropdownFrame
+		btn.MouseButton1Click:Connect(function()
+			local char = player.Character
+			local hrp = char and char:FindFirstChild("HumanoidRootPart")
+			if hrp then
+				local p = hrp.Position
+				inputBox.Text = string.format("%.6f, %.6f, %.6f", p.X, p.Y, p.Z)
+				showPopup("Set to " .. player.Name .. "'s position", Color3.fromRGB(100, 255, 100))
+			else
+				showPopup("Player has no position", Color3.fromRGB(255, 100, 100))
+			end
+			dropdownFrame.Visible = false
+			TweenService:Create(container, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {Size = UDim2.fromOffset(420, 160)}):Play()
+		end)
+	end
+	local num = #players
+	dropdownFrame.CanvasSize = UDim2.new(0, 0, 0, num * 32)
+end)
+
+runBtn.MouseButton1Click:Connect(tryRun)
+inputBox.FocusLost:Connect(function(enterPressed)
+	if enterPressed then tryRun() end
+end)
+
+closeBtn.MouseButton1Click:Connect(function()
+	screenGui:Destroy()
+end)
+
+local minimized = false
+miniBtn.MouseButton1Click:Connect(function()
+	minimized = not minimized
+	if minimized then
+		for _,v in pairs(container:GetChildren()) do
+			if v ~= header and v ~= title and v ~= closeBtn and v ~= miniBtn and v:IsA("TextBox") == false then
+				v.Visible = false
+			end
+		end
+		inputBox.Visible = false
+		dropdownFrame.Visible = false
+		local tween = TweenService:Create(container, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {Size = UDim2.fromOffset(420, 36)})
+		tween:Play()
+		miniBtn.Text = "+"
+	else
+		for _,v in pairs(container:GetChildren()) do
+			v.Visible = true
+		end
+		local tween = TweenService:Create(container, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {Size = UDim2.fromOffset(420, 160)})
+		tween:Play()
+		miniBtn.Text = "—"
+	end
+end)
+
+do
+	local dragging, dragInput, dragStart, startPos
+	local function update(input)
+		local delta = input.Position - dragStart
+		container.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+	end
+	header.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			dragging = true
+			dragStart = input.Position
+			startPos = container.Position
+			input.Changed:Connect(function()
+				if input.UserInputState == Enum.UserInputState.End then
+					dragging = false
+				end
+			end)
+		end
+	end)
+	header.InputChanged:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+			dragInput = input
+		end
+	end)
+	UserInputService.InputChanged:Connect(function(input)
+		if input == dragInput and dragging then
+			update(input)
+		end
+	end)
+end
+
+local function setInitialPosition()
+	local char = LocalPlayer.Character
+	local hrp = char and char:FindFirstChild("HumanoidRootPart")
+	if hrp then
+		local p = hrp.Position
+		inputBox.Text = string.format("%.6f, %.6f, %.6f", p.X, p.Y, p.Z)
+	else
+		LocalPlayer.CharacterAdded:Wait()
+		wait(0.2)
+		local char2 = LocalPlayer.Character
+		local hrp2 = char2 and char2:FindFirstChild("HumanoidRootPart")
+		if hrp2 then
+			local p2 = hrp2.Position
+			inputBox.Text = string.format("%.6f, %.6f, %.6f", p2.X, p2.Y, p2.Z)
+		end
+	end
+end
+
+setInitialPosition()
+
+-- Show initial popup from above
+showPopup("Simple Teleport Coordination By Kxk", Color3.fromRGB(100, 255, 100), true)
