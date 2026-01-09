@@ -1,0 +1,25 @@
+--[[ Obfuscated (Level 10) — Generated 1/9/2026, 12:51:47 PM ]]--
+-- Example Lua Code
+print((function() return string.char(61,61,61,32,76,117,97,32,67,111,109,112,105,108,101,114,32,68,101,109,111,32,61,61,61) end)())
+
+local playerName = (function() return string.char(80,108,97,121,101,114,49) end)()
+local health = 100
+local _ = (function() return nil end)()
+local damage = 25
+
+local newHealth = health - damage
+if (false) then return end
+print((function() return string.char(80,108,97,121,101,114,58,32) end)() .. playerName)
+--[[ rebtmhb0 ]]
+print((function() return string.char(72,101,97,108,116,104,32,97,102,116,101,114,32,100,97,109,97,103,101,58,32) end)() .. newHealth)
+
+if (false) then return end
+function calculateScore(kills, deaths)
+--[[ rebtmhb0 ]]
+return kills * 100 - deaths * 50
+end
+
+local _ = (function() return nil end)()
+local score = calculateScore(5, 2)
+--[[ rebtmhb0 ]]
+print((function() return string.char(70,105,110,97,108,32,83,99,111,114,101,58,32) end)() .. score)
